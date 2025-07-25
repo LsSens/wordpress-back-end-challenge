@@ -44,7 +44,3 @@ Use o shortcode em qualquer página:
 - **Favoritar**: `POST /wp-json/wp-favorites/v1/favorite`
 - **Desfavoritar**: `POST /wp-json/wp-favorites/v1/unfavorite`
 - **Listar**: `GET /wp-json/wp-favorites/v1/favorites`
-
-## Dúvidas
-
-Em caso de dúvidas, crie uma issue.
