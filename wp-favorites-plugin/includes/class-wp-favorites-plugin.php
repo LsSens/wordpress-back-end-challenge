@@ -95,6 +95,25 @@ class WP_Favorites_Plugin {
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+        
+        // Verify table was created
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
+        if (!$table_exists) {
+            error_log('WP Favorites Plugin: Failed to create table ' . $table_name);
+        }
+    }
+    
+    /**
+     * Check if table exists and create if not
+     */
+    private function ensure_table_exists() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'user_favorites';
+        
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
+        if (!$table_exists) {
+            $this->create_table();
+        }
     }
     
     /**
@@ -143,6 +162,24 @@ class WP_Favorites_Plugin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'user_favorites';
         
+        // Ensure table exists
+        $this->ensure_table_exists();
+        
+        // Check if already favorited
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table_name WHERE user_id = %d AND post_id = %d",
+            $user_id,
+            $post_id
+        ));
+        
+        if ($existing) {
+            return array(
+                'success' => true,
+                'message' => 'Post already favorited',
+                'post_id' => $post_id
+            );
+        }
+        
         $result = $wpdb->insert(
             $table_name,
             array(
@@ -179,6 +216,24 @@ class WP_Favorites_Plugin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'user_favorites';
         
+        // Ensure table exists
+        $this->ensure_table_exists();
+        
+        // Check if already favorited
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table_name WHERE user_id = %d AND post_id = %d",
+            $user_id,
+            $post_id
+        ));
+        
+        if (!$existing) {
+            return array(
+                'success' => true,
+                'message' => 'Post not favorited',
+                'post_id' => $post_id
+            );
+        }
+        
         $result = $wpdb->delete(
             $table_name,
             array(
@@ -209,6 +264,9 @@ class WP_Favorites_Plugin {
         
         global $wpdb;
         $table_name = $wpdb->prefix . 'user_favorites';
+        
+        // Ensure table exists
+        $this->ensure_table_exists();
         
         $favorites = $wpdb->get_col($wpdb->prepare(
             "SELECT post_id FROM $table_name WHERE user_id = %d ORDER BY created_at DESC",
